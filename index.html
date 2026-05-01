@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse by ZennPH — AI-Powered Cruise Inspection</title>
+    <meta name="description" content="Pulse is the first AI-powered cruise ship public health inspection platform. Record observations by voice, get instant VSP 2025 analysis, and generate professional reports.">
+    <meta name="theme-color" content="#02040a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #02040a;
+            --bg: #040914;
+            --bg-card: #0a1024;
+            --bg-card-hover: #0e1630;
+            --border: rgba(79, 160, 255, 0.10);
+            --border-accent: rgba(79, 160, 255, 0.22);
+            --blue: #4fa0ff;
+            --blue-bright: #7bbcff;
+            --cyan: #00e5ff;
+            --cyan-glow: rgba(0, 229, 255, 0.25);
+            --green: #00ffaa;
+            --green-glow: rgba(0, 255, 170, 0.25);
+            --text: #f0f6ff;
+            --text-dim: #8aabcc;
+            --text-muted: #4d6d8f;
+            --radius: 20px;
+            --radius-sm: 12px;
+
+            /* 🖐️ Working (previous number was ~152px, this compensates for the fixed header) */
+            scroll-padding-top: 88px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: var(--scroll-padding-top, 88px);
+        }
+
+        body {
+            font-family: 'Inter', 'Space Grotesk', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Particles Canvas ── */
+        #particles-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── Animated Background Gradient ── */
+        .bg-aura {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 15%, rgba(79, 160, 255, 0.08) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 80% 85%, rgba(0, 229, 255, 0.06) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 50% at 50% 50%, rgba(0, 255, 170, 0.03) 0%, transparent 60%);
+            animation: aura-breathe 8s ease-in-out infinite;
+        }
+
+        @keyframes aura-breathe {
+            0%,
+            100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* ── Grid Overlay ── */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.35;
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(79, 160, 255, 0.10) 1px, transparent 0);
+            background-size: 32px 32px;
+            mask-image: radial-gradient(ellipse 80% 50% at 50% 40%, black 30%, transparent 70%);
+        }
+
+        /* ── Content Wrapper ── */
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── NAV ── */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.35s ease;
+        }
+
+        .nav.scrolled {
+            background: rgba(4, 9, 20, 0.88);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 32px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .nav-logo .logo-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 16px var(--cyan-glow), 0 0 36px rgba(0, 229, 255, 0.15);
+            animation: logo-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes logo-pulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 1;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: #fff;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--cyan);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: 10px 22px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #4fa0ff 0%, #1a6eff 100%);
+            color: #fff !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            letter-spacing: 0.04em;
+            box-shadow: 0 4px 20px rgba(79, 160, 255, 0.35);
+            transition: all 0.25s ease !important;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(79, 160, 255, 0.5) !important;
+        }
+
+        .nav-cta::after {
+            display: none !important;
+        }
+
+        /* ── Mobile Nav Toggle ── */
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: #fff;
+            margin: 5px 0;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 32px 80px;
+            position: relative;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(79, 160, 255, 0.08);
+            border: 1px solid rgba(79, 160, 255, 0.18);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--blue-bright);
+            margin-bottom: 28px;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .hero-badge .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green-glow);
+            animation: logo-pulse 1.5s ease-in-out infinite;
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(44px, 8vw, 90px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.8s 0.1s ease forwards;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, #ffffff 10%, #d7ebff 35%, #7bbcff 65%, #00e5ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 28px rgba(79, 160, 255, 0.35));
+        }
+
+        .hero p {
+            font-size: clamp(16px, 2.5vw, 20px);
+            color: var(--text-dim);
+            max-width: 620px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+            animation: fadeInUp 0.8s 0.2s ease forwards;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s 0.3s ease forwards;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 15px 30px;
+            border-radius: 999px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4fa0ff 0%, #1a6eff 50%, #0048e8 100%);
+            color: #fff;
+            box-shadow: 0 6px 30px rgba(79, 160, 255, 0.4), 0 0 0 0 rgba(79, 160, 255, 0);
+            animation: btn-glow-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes btn-glow-pulse {
+            0%,
+            100% {
+                box-shadow: 0 6px 30px rgba(79, 160, 255, 0.4), 0 0 0 0 rgba(79, 160, 255, 0);
+            }
+            50% {
+                box-shadow: 0 6px 40px rgba(79, 160, 255, 0.7), 0 0 0 14px rgba(79, 160, 255, 0);
+            }
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 44px rgba(79, 160, 255, 0.6);
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff;
+            border: 1.5px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* ── Floating Card Showcase ── */
+        .hero-visual {
+            margin-top: 64px;
+            position: relative;
+            animation: fadeInUp 0.8s 0.4s ease forwards;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        .hero-card {
+            background: rgba(10, 20, 40, 0.9);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            max-width: 800px;
+            margin: 0 auto;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(79, 160, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15%;
+            right: 15%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(79, 160, 255, 0.6), transparent);
+        }
+
+        .hero-card::after {
+            content: '';
+            position: absolute;
+            top: -80px;
+            right: -80px;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .hero-card-item {
+            text-align: center;
+        }
+
+        .hero-card-item .icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .hero-card-item .label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .hero-card-item .value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--cyan);
+            margin: 4px 0;
+            text-shadow: 0 0 16px rgba(0, 229, 255, 0.3);
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── SECTION TITLES ── */
+        .section {
+            padding: 100px 32px;
+            position: relative;
+        }
+
+        .section-label {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--blue-bright);
+            margin-bottom: 16px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(79, 160, 255, 0.08);
+            border: 1px solid rgba(79, 160, 255, 0.14);
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .section-title .highlight {
+            background: linear-gradient(135deg, #7bbcff, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 17px;
+            color: var(--text-dim);
+            max-width: 560px;
+            line-height: 1.7;
+        }
+
+        /* ── FEATURES GRID ── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 48px auto 0;
+        }
+
+        .feature-card {
+            background: rgba(10, 20, 40, 0.7);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            transition: all 0.35s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20%;
+            right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(79, 160, 255, 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-accent);
+            background: rgba(14, 26, 52, 0.85);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4), 0 0 40px rgba(79, 160, 255, 0.06);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 20px;
+            background: rgba(79, 160, 255, 0.1);
+            border: 1px solid rgba(79, 160, 255, 0.15);
+            transition: all 0.35s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            background: rgba(79, 160, 255, 0.16);
+            border-color: rgba(79, 160, 255, 0.3);
+            box-shadow: 0 0 24px rgba(79, 160, 255, 0.15);
+        }
+
+        .feature-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        /* ── HOW IT WORKS ── */
+        .steps-container {
+            max-width: 900px;
+            margin: 56px auto 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .step {
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+            padding: 28px 0;
+            border-bottom: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .step:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: rgba(79, 160, 255, 0.1);
+            border: 1px solid rgba(79, 160, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--cyan);
+            transition: all 0.35s ease;
+        }
+
+        .step:hover .step-number {
+            background: rgba(79, 160, 255, 0.18);
+            border-color: rgba(79, 160, 255, 0.35);
+            box-shadow: 0 0 28px rgba(0, 229, 255, 0.2);
+        }
+
+        .step-content h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-content p {
+            font-size: 15px;
+            color: var(--text-dim);
+            line-height: 1.7;
+        }
+
+        /* ── STATS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 56px auto 0;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 32px 20px;
+            border-radius: var(--radius);
+            background: rgba(10, 20, 40, 0.7);
+            border: 1px solid var(--border);
+            transition: all 0.35s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-3px);
+        }
+
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7bbcff, #00e5ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        /* ── TESTIMONIALS ── */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1100px;
+            margin: 48px auto 0;
+        }
+
+        .testimonial-card {
+            background: rgba(10, 20, 40, 0.7);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-2px);
+        }
+
+        .testimonial-text {
+            font-size: 15px;
+            color: var(--text-dim);
+            line-height: 1.7;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4fa0ff, #00e5ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        .testimonial-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .testimonial-role {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ── CTA ── */
+        .cta-section {
+            text-align: center;
+            padding: 120px 32px;
+            position: relative;
+        }
+
+        .cta-card {
+            background: linear-gradient(135deg, rgba(10, 20, 50, 0.95) 0%, rgba(8, 16, 40, 0.95) 100%);
+            border: 1px solid var(--border-accent);
+            border-radius: 28px;
+            padding: 64px 40px;
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), 0 0 80px rgba(79, 160, 255, 0.06);
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent, rgba(0, 229, 255, 0.6), transparent);
+        }
+
+        .cta-card::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.10) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-card h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(28px, 5vw, 44px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .cta-card p {
+            font-size: 17px;
+            color: var(--text-dim);
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 38px;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── FOOTER ── */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 48px 32px 32px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .footer p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(4, 9, 20, 0.97);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 28px;
+                z-index: 999;
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                font-size: 20px;
+            }
+
+            .nav-toggle {
+                display: block;
+            }
+
+            .hero-card-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .section {
+                padding: 64px 20px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-card {
+                padding: 40px 24px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .stat-value {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .hero-card-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .hero-card-item .value {
+                font-size: 18px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .nav {
+                padding: 12px 16px;
+            }
+
+            .btn {
+                padding: 12px 22px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles Background -->
+    <canvas id="particles-canvas"></canvas>
+    <div class="bg-aura"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="content">
+
+        <!-- ══════ NAV ══════ -->
+        <nav class="nav" id="navbar">
+            <a href="#" class="nav-logo">
+                <span class="logo-dot"></span> Pulse
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#features" onclick="closeNav()">Features</a></li>
+                <li><a href="#how-it-works" onclick="closeNav()">How It Works</a></li>
+                <li><a href="#stats" onclick="closeNav()">Impact</a></li>
+                <li><a href="#testimonials" onclick="closeNav()">Testimonials</a></li>
+                <li><a href="#cta" class="nav-cta" onclick="closeNav()">Try Pulse Free</a></li>
+            </ul>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span><span></span><span></span>
+            </button>
+        </nav>
+
+        <!-- ══════ HERO ══════ -->
+        <section class="hero" id="hero">
+            <div>
+                <div class="hero-badge">
+                    <span class="badge-dot"></span> AI-Powered Cruise Inspection
+                </div>
+                <h1>
+                    Ship inspections<br>
+                    <span class="gradient-text">at the speed of voice.</span>
+                </h1>
+                <p>
+                    Pulse transforms cruise ship public health inspections from paper chaos
+                    into a seamless digital experience. Speak your observations, get instant
+                    AI-powered VSP 2025 analysis, and generate professional reports — all from
+                    one app.
+                </p>
+                <div class="hero-actions">
+                    <a href="#cta" class="btn btn-primary">
+                        Start Free Trial
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="#how-it-works" class="btn btn-ghost">
+                        See How It Works
+                    </a>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-card">
+                        <div class="hero-card-grid">
+                            <div class="hero-card-item">
+                                <div class="icon">🎙️</div>
+                                <div class="value">Voice</div>
+                                <div class="label">Input</div>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon">🧠</div>
+                                <div class="value">AI</div>
+                                <div class="label">Analysis</div>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon">📋</div>
+                                <div class="value">VSP 2025</div>
+                                <div class="label">Compliance</div>
+                            </div>
+                            <div class="hero-card-item">
+                                <div class="icon">📊</div>
+                                <div class="value">Reports</div>
+                                <div class="label">One Click</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════ FEATURES ══════ -->
+        <section class="section" id="features">
+            <div style="max-width:1200px;margin:0 auto;text-align:center;">
+                <span class="section-label reveal">Features</span>
+                <h2 class="section-title reveal">Everything you need to<br><span class="highlight">inspect smarter.</span></h2>
+                <p class="section-subtitle reveal" style="margin:0 auto;">
+                    From the galley to the engine room, Pulse covers every inspection module
+                    with AI precision and VSP 2025 compliance.
+                </p>
+                <div class="features-grid">
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">🎤</div>
+                        <h3>Voice-Powered Input</h3>
+                        <p>Record observations naturally with your voice. Pulse transcribes, normalizes, and structures every note into a proper finding — hands-free.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">🔍</div>
+                        <h3>AI-Powered Analysis</h3>
+                        <p>Every observation is instantly matched to the correct VSP 2025 checklist item, complete with deficiency wording, risk level, and corrective recommendations.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">📱</div>
+                        <h3>Works Offline</h3>
+                        <p>No internet? No problem. Record observations anywhere on the ship. Sync later when you're back online for full AI processing.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">📑</div>
+                        <h3>Excel & PDF Reports</h3>
+                        <p>Generate professional inspection reports in one click. Export to Excel with embedded photos or print directly — formatted for VSP submission.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">📸</div>
+                        <h3>Photo Attachments</h3>
+                        <p>Capture evidence as you inspect. Photos are attached to findings and embedded directly into your exported reports.</p>
+                    </div>
+                    <div class="feature-card reveal">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Privacy-First Storage</h3>
+                        <p>Your data stays on your device. No cloud uploads unless you choose to sync. API keys are stored locally with full control.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════ HOW IT WORKS ══════ -->
+        <section class="section" id="how-it-works">
+            <div style="max-width:900px;margin:0 auto;text-align:center;">
+                <span class="section-label reveal">How It Works</span>
+                <h2 class="section-title reveal">From observation to report<br><span class="highlight">in seconds.</span></h2>
+                <div class="steps-container">
+                    <div class="step reveal">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Select Your Inspection Module</h3>
+                            <p>Choose from Galley, Bars, Restaurants, Potable Water, RWF, Medical, Housekeeping, and more. Every module is pre-loaded with VSP 2025 checklist items.</p>
+                        </div>
+                    </div>
+                    <div class="step reveal">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Record or Type Your Observation</h3>
+                            <p>Speak naturally — "Three compartment sink chlorine bucket at 0 ppm in crew galley" — or type it. Pulse automatically transcribes and normalizes your input.</p>
+                        </div>
+                    </div>
+                    <div class="step reveal">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>AI Instantly Classifies the Finding</h3>
+                            <p>Pulse matches your observation to the correct VSP 2025 reference, assigns a risk level, and writes deficiency wording — all powered by GPT-4o.</p>
+                        </div>
+                    </div>
+                    <div class="step reveal">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Generate & Export Your Report</h3>
+                            <p>Review all findings, edit as needed, then export a professional Excel report or print directly. Everything is structured for VSP submission.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════ STATS ══════ -->
+        <section class="section" id="stats">
+            <div style="max-width:1000px;margin:0 auto;text-align:center;">
+                <span class="section-label reveal">Impact</span>
+                <h2 class="section-title reveal">Built for<br><span class="highlight">real inspections.</span></h2>
+                <div class="stats-grid">
+                    <div class="stat-card reveal">
+                        <div class="stat-value">12+</div>
+                        <div class="stat-label">Inspection Modules</div>
+                    </div>
+                    <div class="stat-card reveal">
+                        <div class="stat-value">300+</div>
+                        <div class="stat-label">Checklist Items</div>
+                    </div>
+                    <div class="stat-card reveal">
+                        <div class="stat-value">VSP 2025</div>
+                        <div class="stat-label">Full Compliance</div>
+                    </div>
+                    <div class="stat-card reveal">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">Offline Capable</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════ TESTIMONIALS ══════ -->
+        <section class="section" id="testimonials">
+            <div style="max-width:1100px;margin:0 auto;text-align:center;">
+                <span class="section-label reveal">Testimonials</span>
+                <h2 class="section-title reveal">Trusted by<br><span class="highlight">public health professionals.</span></h2>
+                <div class="testimonials-grid">
+                    <div class="testimonial-card reveal">
+                        <div class="testimonial-text">
+                            "Pulse has completely transformed how we conduct inspections. What used to take hours of paperwork now happens in real-time. The AI analysis is remarkably accurate with VSP references."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">MK</div>
+                            <div>
+                                <div class="testimonial-name">Maria K.</div>
+                                <div class="testimonial-role">Public Health Officer</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card reveal">
+                        <div class="testimonial-text">
+                            "The offline mode is a game-changer. I can inspect the engine room, potable water systems, and RWFs without worrying about connectivity. The sync is seamless."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">JR</div>
+                            <div>
+                                <div class="testimonial-name">James R.</div>
+                                <div class="testimonial-role">Chief Engineer</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card reveal">
+                        <div class="testimonial-text">
+                            "The Excel reports save us so much time before VSP inspections. Everything is already formatted with the correct references. Our last inspection score improved significantly."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="testimonial-avatar">SL</div>
+                            <div>
+                                <div class="testimonial-name">Sarah L.</div>
+                                <div class="testimonial-role">Hotel Director</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════ CTA ══════ -->
+        <section class="cta-section" id="cta">
+            <div class="cta-card reveal">
+                <h2>Ready to transform your inspections?</h2>
+                <p>
+                    Start your 7-day free trial. No credit card required.
+                    See firsthand how Pulse can streamline your entire public health workflow.
+                </p>
+                <a href="#" class="btn btn-primary cta-btn">
+                    Start Free Trial
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <p style="margin-top:18px;font-size:12px;color:var(--text-muted);">
+                    By signing up you agree to our Terms and Privacy Policy.
+                </p>
+            </div>
+        </section>
+
+        <!-- ══════ FOOTER ══════ -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">Pulse <span style="color:var(--blue-bright);">by ZennPH</span></div>
+                <p>
+                    Pulse is a product of ZennPH LTD — the first platform built specifically for
+                    cruise ship public health management.
+                </p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="mailto:office@zennph.com">Contact</a>
+                    <a href="https://zennph.com">ZennPH</a>
+                </div>
+                <p style="margin-top:24px;">&copy; 2025 ZennPH LTD. All rights reserved.</p>
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        // ── Particle System ──
+        (function() {
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            let animationId;
+            const PARTICLE_COUNT = 70;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 1.8 + 0.4;
+                    this.speedX = (Math.random() - 0.5) * 0.35;
+                    this.speedY = (Math.random() - 0.5) * 0.35;
+                    this.opacity = Math.random() * 0.45 + 0.1;
+                    this.pulseSpeed = Math.random() * 0.02 + 0.005;
+                    this.pulseOffset = Math.random() * Math.PI * 2;
+                }
+                update(time) {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    if (this.x < -10) this.x = canvas.width + 10;
+                    if (this.x > canvas.width + 10) this.x = -10;
+                    if (this.y < -10) this.y = canvas.height + 10;
+                    if (this.y > canvas.height + 10) this.y = -10;
+                    this.currentOpacity = this.opacity + Math.sin(time * this.pulseSpeed + this
+                        .pulseOffset) * 0.15;
+                }
+                draw(ctx) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(79,160,255,${Math.max(0.04, this.currentOpacity)})`;
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
+            }
+
+            function animate(timestamp) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const time = timestamp * 0.001;
+                particles.forEach(p => {
+                    p.update(time);
+                    p.draw(ctx);
+                });
+                // Draw connection lines between nearby particles
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 130) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(79,160,255,${0.04 * (1 - dist / 130)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                animationId = requestAnimationFrame(animate);
+            }
+            animationId = requestAnimationFrame(animate);
+        })();
+
+        // ── Nav Scroll Effect ──
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 40);
+        });
+
+        // ── Mobile Nav Toggle ──
+        const navToggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        function closeNav() {
+            navLinks.classList.remove('active');
+        }
+
+        // ── Scroll Reveal (Intersection Observer) ──
+        const revealElements = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+        revealElements.forEach(el => observer.observe(el));
+
+        // ── Smooth scroll for all anchor links ──
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    const offset = navbar.offsetHeight + 16;
+                    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
